@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML5 QR碼掃描器</title>
+</head>
+<body>
+  <h1>HTML5 QR碼掃描器</h1>
+  <div style="width: 80%" id="reader"></div> <!-- 調整寬度為80% -->
+  <div id="result"></div>
+  <button onclick="pauseScan()">暫停掃描</button>
+  <button onclick="resumeScan()">繼續掃描</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.0.0-beta.0/dist/html5-qrcode.min.js"></script>
+  <script>
+    let scannedValues = []; // 儲存掃描的數值
+    let html5QrcodeScanner; // 儲存掃描器實例
+
+    const onScanSuccess = (decodedText, decodedResult) => {
+      const resultDiv = document.querySelector("#result");
+      resultDiv.innerText = decodedText;
+
+      pauseScan(); // 先暫停掃描
+
+      if (!scannedValues.includes(decodedText)) {
+        scannedValues.push(decodedText);
+        alert("掃描成功");
+      } else {
+        alert("掃描失敗，數值已存在");
+      }
+
+      // 完成所有操作後再啟動掃描
+      setTimeout(() => {
+        resumeScan();
+      }, 1000); // 假設停頓1秒後再啟動掃描
+    };
+
+    function pauseScan() {
+      html5QrcodeScanner.pause();
+    }
+
+    function resumeScan() {
+      html5QrcodeScanner.resume();
+    }
+
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", {
+      fps: 10,
+      qrbox: 300, // 調整為 300
+      facingMode: "user" // 使用前置相機
+    });
+
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
