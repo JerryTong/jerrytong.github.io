@@ -1,232 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>數字鍵盤</title>
-<style>
-.container {
-  text-align: center;
-  margin-top: 50px;
-}
-input[type="number"] {
-  width: 100px;
-  padding: 10px;
-  font-size: 16px;
-}
-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-}
-#keyboard {ㄎ
-  width: 600px;
-  margin: 50px auto;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 10px;
-  text-align: center;
-}
-
-.key {
-  width: 30%;
-  height: 50px;
-  display: inline-block;
-  margin: 5px;
-  background-color: #f2f2f2;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  line-height: 50px;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.key:hover {
-  background-color: #e0e0e0;
-}
-
-#message {
-  font-weight: bold;
-  margin-top: 10px;
-}
-.blue {
-  color: blue;
-}
-
-.red {
-  color: red;
-}
-
-#numbersCount {
-	margin-top: 10px;
-}
-
-#numberList {
-	margin-top: 20px;
-}
-
-#numberList div {
-	display: inline-block;
-	margin: 5px;
-	padding: 5px 10px;
-	border: 1px solid #ccc;
-	border-radius: 5px;
-	background-color: #f2f2f2;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Event to Apple Calendar</title>
 </head>
 <body>
-<div class="container">
-  <input type="number" id="numberInput">
-  <button onclick="checkAndAddNumber()">加入</button>
-  <p id="message"></p>
-  <p id="numbersCount"></p>
-  <div id="keyboard">
-    <div class="key" onclick="addToInput(1)">1</div>
-    <div class="key" onclick="addToInput(2)">2</div>
-    <div class="key" onclick="addToInput(3)">3</div>
-    <div class="key" onclick="addToInput(4)">4</div>
-    <div class="key" onclick="addToInput(5)">5</div>
-    <div class="key" onclick="addToInput(6)">6</div>
-    <div class="key" onclick="addToInput(7)">7</div>
-    <div class="key" onclick="addToInput(8)">8</div>
-    <div class="key" onclick="addToInput(9)">9</div>
-	<div class="key" onclick="">　</div>
-    <div class="key" onclick="addToInput(0)">0</div>
-	<div class="key" onclick="checkAndAddNumber()" style="background-color: #ffb6c1;">加入</div>
-  </div>
-  <div id="numberList"></div>
-  <button onclick="clearLocalStorage()">清空紀錄</button>
-  <button onclick="copyNumbersToClipboard()">複製到剪貼板</button>
-</div>
+
+<h2>Add Event to Apple Calendar</h2>
+
+<!-- Define event details -->
+<button id="add-to-calendar">Add to Calendar</button>
 
 <script>
+document.getElementById('add-to-calendar').addEventListener('click', function() {
+    var event = {
+        title: 'Your Event Title',
+        location: 'Event Location',
+        description: 'Event Description',
+        startDateTime: '2024-05-16T09:00:00', // Format: YYYY-MM-DDTHH:MM:SS
+        endDateTime: '2024-05-16T17:00:00'
+    };
 
-var numbers = [];
-var numbersCount = document.getElementById("numbersCount");
-var numberList = document.getElementById("numberList");
-
-// 將事件委派到 numberList 容器上
-numberList.addEventListener('click', function(event) {
-    if (event.target && event.target.nodeName === 'DIV') {
-        var clickedNumber = parseInt(event.target.innerText);
-        var confirmation = confirm("確定要將序號【 " + clickedNumber + " 】兌換紀錄移除嗎？");
-        if (confirmation) {
-            removeNumberFromLocalStorage(clickedNumber);
-        }
-    }
+    var calendarURL = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(generateCalendar(event));
+    var downloadLink = document.createElement('a');
+    downloadLink.href = calendarURL;
+    downloadLink.download = 'event.ics';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
 });
 
-// 檢查本地存儲中是否有數字，並加載它們
-if (localStorage.getItem('numbers')) {
-    var storedNumbers = JSON.parse(localStorage.getItem('numbers'));
-    if (Array.isArray(storedNumbers)) {
-        numbers = storedNumbers;
-        updateNumbersCount();
-        displayNumbers();
-    } else {
-        console.error("本地存儲中的 'numbers' 不是陣列。");
-    }
-}
-
-function showMessage(message, color) {
-    document.getElementById("message").innerText = message;
-    document.getElementById("message").className = color;
-	// 清除 numberInput 的值
-    document.getElementById("numberInput").value = "";
-}
-
-function updateNumbersCount() {
-    numbersCount.innerText = "已兌換數量：" + numbers.length;
-}
-
-function saveNumbersToLocalStorage() {
-    localStorage.setItem('numbers', JSON.stringify(numbers));
-}
-
-function displayNumbers() {
-    numberList.innerHTML = "";
-	
-	numbers.sort(function(a, b) {
-        return a - b;
-    });
-	
-    numbers.forEach(function(number) {
-        var div = document.createElement("div");
-        div.innerText = number;
-        numberList.appendChild(div);
-    });
-}
-
-function addToInput(number) {
-    document.getElementById("numberInput").value += number;
-}
-
-function checkAndAddNumber() {
-    var inputNumber = parseInt(document.getElementById("numberInput").value);
-
-    if (isNaN(inputNumber) || inputNumber <= 0 || String(inputNumber)[0] === '0') {
-        showMessage("輸入的值必須為大於0的正整數，且開頭不可為0。", "red");
-        return;
-    }
-
-    var duplicate = false;
-
-    // 檢查是否有重複數字
-    for (var i = 0; i < numbers.length; i++) {
-        if (numbers[i] === inputNumber) {
-            duplicate = true;
-            break;
-        }
-    }
-
-    // 如果不重複，則加入儲存格
-    if (!duplicate) {
-        numbers.push(inputNumber);
-        saveNumbersToLocalStorage();
-        showMessage("已成功兌換！", "blue");
-        updateNumbersCount();
-        displayNumbers();
-    } else {
-        showMessage("該序號已兌換！", "red");
-    }
-}
-
-function clearLocalStorage() {
-    var confirmation = confirm("確定要清空本地存儲嗎？");
-    if (confirmation) {
-        localStorage.removeItem('numbers');
-        numbers = [];
-        updateNumbersCount();
-        showMessage("本地存儲已清空。", "blue");
-        displayNumbers();
-    }
-}
-
-// 從本地存儲中刪除指定數字
-function removeNumberFromLocalStorage(number) {
-    var index = numbers.indexOf(number);
-    if (index !== -1) {
-        numbers.splice(index, 1);
-        saveNumbersToLocalStorage();
-        showMessage("已移除【" + number + "】兌換紀錄！", "blue");
-        updateNumbersCount();
-        displayNumbers();
-    }
-}
-
-// 數字數組的內容複製到剪貼板
-function copyNumbersToClipboard() {
-    var textToCopy = numbers.join(",");
-    navigator.clipboard.writeText(textToCopy)
-        .then(function() {
-            showMessage("數字已複製到剪貼板。", "blue");
-        })
-        .catch(function(err) {
-            showMessage("無法複製數字到剪貼板：" + err, "red");
-        });
+function generateCalendar(event) {
+    var calendar = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        'SUMMARY:' + event.title,
+        'LOCATION:' + event.location,
+        'DESCRIPTION:' + event.description,
+        'DTSTART:' + event.startDateTime,
+        'DTEND:' + event.endDateTime,
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].join('\n');
+    return calendar;
 }
 </script>
+
 </body>
 </html>
