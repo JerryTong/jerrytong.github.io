@@ -22,12 +22,27 @@ document.getElementById('add-to-calendar').addEventListener('click', function() 
         endDateTime: '2024-05-16T17:00:00'
     };
 
-    var calendarURL = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(generateCalendar(event));
-    var downloadLink = document.createElement('a');
-    downloadLink.href = calendarURL;
-    downloadLink.download = 'event.ics';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
+    var calendarContent = generateCalendar(event);
+    var blob = new Blob([calendarContent], {type: 'text/calendar;charset=utf-8'});
+
+    // Check if the browser is Safari
+    var isSafari = navigator.vendor && navigator.vendor.indexOf('Apple') > -1 &&
+                   navigator.userAgent &&
+                   navigator.userAgent.indexOf('CriOS') == -1 &&
+                   navigator.userAgent.indexOf('FxiOS') == -1;
+
+    if (isSafari) {
+        // For Safari, open the calendar content in a new tab
+        var url = window.URL.createObjectURL(blob);
+        window.open(url);
+    } else {
+        // For other browsers, initiate a download
+        var downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.download = 'event.ics';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    }
 });
 
 function generateCalendar(event) {
